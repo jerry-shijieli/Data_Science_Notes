@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Version: 2.0
 # Original Python version: 3.0
 
-from urllib import request
-from urllib.parse import quote
+from six.moves import urllib.request as request
+from six.moves import urllib.parse.quote as quote
 from lxml import etree
 import time
 
