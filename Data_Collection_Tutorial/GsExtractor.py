@@ -4,9 +4,7 @@
 # Original Python version: 3.0
 
 from six.moves import urllib
-#from six.moves import urllib.parse
 from lxml import etree
-import time
 
 class GsExtractor(object):
     def _init_(self):
