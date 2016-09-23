@@ -3,18 +3,18 @@
 # Version: 2.0
 # Original Python version: 3.0
 
-from six.moves import urllib.request as request
-from six.moves import urllib.parse.quote as quote
+from six.moves import urllib
+#from six.moves import urllib.parse
 from lxml import etree
 import time
 
-class GsEtractor(object):
+class GsExtractor(object):
     def _init_(self):
         self.xslt = ""
 
     # extract xslt from file
     def setXsltFromFile(self, xsltFilePath):
-        file = open(xsltFilePath, 'r', encoding='UTF-8')
+        file = open(xsltFilePath, 'r')
         try:
             self.xslt = file.read()
         finally:
@@ -27,11 +27,11 @@ class GsEtractor(object):
     # extract xslt from GooSeeker API
     def setXsltFromAPI(self, APIKey, theme, middle=None, bname=None):
         apiurl = "http://www.gooseeker.com/api/getextractor?key="+APIKey+"&theme="+quote(theme)
-        if (middle)
-            apiurl = apiurl + "&middle=" + quote(middle)
+        if (middle):
+            apiurl = apiurl + "&middle=" + urllib.parse.quote(middle)
         if (bname):
-            apiurl = apiurl + "&bname=" + quote(bname)
-        apiconn = request.urlopen(apiurl)
+            apiurl = apiurl + "&bname=" + urllib.parse.quote(bname)
+        apiconn = urllib.request.urlopen(apiurl)
         self.xslt = apiconn.read()
 
     # return xslt
