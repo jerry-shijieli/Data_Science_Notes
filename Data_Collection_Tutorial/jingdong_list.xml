@@ -1,0 +1,26 @@
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
+<xsl:template match="/">
+<商品>
+<xsl:apply-templates select="//*[@id='itemInfo' and count(.//*[@id='summary-price']/div[position()=2]/strong/text())>0 and count(.//*[@id='name']/h1/text())>0]" mode="商品"/>
+</商品>
+</xsl:template>
+
+<xsl:template match="//*[@id='itemInfo' and count(.//*[@id='summary-price']/div[position()=2]/strong/text())>0 and count(.//*[@id='name']/h1/text())>0]" mode="商品">
+<item>
+<价格>
+<xsl:value-of select="*//*[@id='summary-price']/div[position()=2]/strong/text()"/>
+<xsl:value-of select="*[@id='summary-price']/div[position()=2]/strong/text()"/>
+<xsl:if test="@id='summary-price'">
+<xsl:value-of select="div[position()=2]/strong/text()"/>
+</xsl:if>
+</价格>
+<名称>
+<xsl:value-of select="*//*[@id='name']/h1/text()"/>
+<xsl:value-of select="*[@id='name']/h1/text()"/>
+<xsl:if test="@id='name'">
+<xsl:value-of select="h1/text()"/>
+</xsl:if>
+</名称>
+</item>
+</xsl:template>
+</xsl:stylesheet>

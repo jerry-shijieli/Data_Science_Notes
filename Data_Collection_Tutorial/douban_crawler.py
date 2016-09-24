@@ -2,6 +2,7 @@
 #-*-coding: utf-8-*-
 # Collect data from Douban websites
 # Python version: 2.7
+# Require phantomjs program to load websites
 
 from lxml import etree
 from GsExtractor import GsExtractor
@@ -10,7 +11,7 @@ import time
 
 class PhantomSpider:
     def getContent(self, url):
-        browser = webdriver.PhantomJS(executable_path="/Users/Jerry/Downloads/phantomjs-2.1.1-macosx/bin/phantomjs")
+        browser = webdriver.PhantomJS(executable_path="./phantomjs-2.1.1-macosx/bin/phantomjs")
         browser.get(url)
         time.sleep(3)
         html = browser.execute_script("return document.documentElement.outerHTML")
