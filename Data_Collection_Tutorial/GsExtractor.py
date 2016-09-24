@@ -24,7 +24,7 @@ class GsExtractor(object):
 
     # extract xslt from GooSeeker API
     def setXsltFromAPI(self, APIKey, theme, middle=None, bname=None):
-        apiurl = "http://www.gooseeker.com/api/getextractor?key="+APIKey+"&theme="+quote(theme)
+        apiurl = "http://www.gooseeker.com/api/getextractor?key="+APIKey+"&theme="+urllib.parse.quote(theme)
         if (middle):
             apiurl = apiurl + "&middle=" + urllib.parse.quote(middle)
         if (bname):
