@@ -17,7 +17,7 @@ class FrequencySummarizer:
         self._stopwords = set(stopwords.words('english') + list(punctuation))
 
     # count word  and then filter by frequency thresholds
-    def _compute_frequencies(selfself, word_sent):
+    def _compute_frequencies(self, word_sent):
         freq = defaultdict(int) # key: words, value: counts
         for s in word_sent:
             for word in s:
@@ -42,7 +42,7 @@ class FrequencySummarizer:
         for i, sent in enumerate(word_sent):
             for w in sent:
                 if w in self._freq:
-                    ranking[i] += freq[w] # rank sentence as sum of words in it
+                    ranking[i] += self._freq[w] # rank sentence as sum of words in it
         sents_idx = nlargest(n, ranking, key=ranking.get) # select the index of top ranked sentence
 
         return [sents[j] for j in sents_idx]  # return top ranked sentence text
