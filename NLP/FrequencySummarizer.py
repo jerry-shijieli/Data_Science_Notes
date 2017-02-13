@@ -35,7 +35,7 @@ class FrequencySummarizer:
     # summarize text using limited number of sentences
     def summarize(self, text, n):
         sents = sent_tokenize(text) # break text into sentences
-        assert n <- len(sents) # check if summary is shorter than original text
+        assert (n <= len(sents)) # check if summary is shorter than original text
         word_sent = [word_tokenize(s.lower()) for s in sents] # break each sentence into list of words
         self._freq = self._compute_frequencies(word_sent) # get word count and filter words by frequency
         ranking = defaultdict(int)
