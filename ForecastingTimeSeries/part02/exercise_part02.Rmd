@@ -1,0 +1,111 @@
+---
+title: "exercise_part02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Forecasting: Linear Trend and ARIMA Models 
+
+There are two main approaches to time series forecasting. One of them is to find persistent patterns in a time series itself, and extrapolate those patterns. Another is to discover how a series depend on other variables, which serve as predicators. 
+
+- naive model
+- linear model (based on a simple linear regression)
+- ARIMA model (assumes a linear dependence of a time series on its past values and random shocks.)
+
+## Exercise 1
+
+Read the data from the filed, and transform it into a time series (ts) object (given that the data is quarterly and the starting period is the fourth quarter of 1999). Plot the obtained series.
+
+```{r}
+df <- read.csv("ecommerce.csv")
+series <- ts(df, frequency=4, start=c(1999,4))
+plot(series)
+```
+
+## Exercise 2
+
+Make a naive forecast for the next 8 periods using the appropriate function from the **forecast** package (i.e. create an object of the class forecast using the function that implements the naive method of forecasting)(Note thtat this method sets all forecast values equal to the last known time series value).
+
+```{r}
+require(forecast)
+fcast_naive <- naive(series, h=8)
+```
+
+## Exercise 3
+
+Plot the forecast values.
+
+```{r}
+plot(fcast_naive)
+```
+
+## Exercise 4 
+
+Make a forecast for the next 8 peridos based on a linear model in two steps:
+(1) create a linear regression model for the forecast using the tslm function from the forecast package (use the series as the dependent variable, trend and season as independent variables),
+(2) make a forecast based on the model using the forecast function from the same package. Plot the forecast.
+
+```{r}
+model_linear <- tslm(series ~ trend + season)
+fcast_linear <- forecast(model_linear, h=8)
+plot(fcast_linear)
+```
+
+## Exercise 5
+
+Retrieve forecast errors (residuals) from the linear model based forecast and save them as a separate variable. 
+
+```{r}
+fcast_linear_residuals <- fcast_linear$residuals
+```
+
+## Exercise 6
+
+Make a forecast for the next 8 periods based on the ARIMA model in two steps:
+(1) create a model using the **auto.arima** function from the forecast package, 
+(2) make a forecast based on the model using the forecast function from the same package.
+Plot the forcast.
+
+```{r}
+model_arima <- auto.arima(series)
+fcast_arima <- forecast(model_arima, h=8)
+plot(fcast_arima)
+```
+
+## Exercise 7 
+
+Print the summary fo the forecast based on the ARIMA model.
+
+```{r}
+fcast_arima_summary <- summary(fcast_arima)
+```
+
+## Exercise 8
+
+Explore the structure the forecast summary. Find the forecast value for the last period, and its 5% confidence interval values.
+
+```{r}
+fcast_arima_summary[["Point Forecast"]][8]
+fcast_arima_summary[["Lo 95"]][8]
+fcast_arima_summary[["Hi 95"]][8]
+```
+
+## Exercise 9
+
+Retrieve forecast errors (residuals) from the ARIMA based forecast.
+
+```{r}
+fcast_arima_residuals <- fcast_arima$residuals
+```
+
+## Exercise 10
+
+Use the errors from the ARIMA based forecast and the errors from the linear model based froecast to compare predictive accuracy of the two models with the Diebold-Mariano test (implemented as a function in the forecast package). Test the hypothesis that the ARIMA based forecast is more accurate than the linear model based forecast.
+
+```{r}
+dm.test(fcast_linear_residuals, fcast_arima_residuals, alternative = "greater")
+```
+
