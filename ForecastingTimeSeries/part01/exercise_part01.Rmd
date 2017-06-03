@@ -1,0 +1,97 @@
+---
+title: "exercise_part01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+[Original Source](http://www.r-exercises.com/2017/04/10/forecasting-time-series-exploration-exercises-part-1/)
+
+## Exercise 1
+
+Read data from the file sales.csv
+
+```{r}
+df <- read.csv("sales.csv")
+```
+
+## Exercise 2
+
+Transform the data into a time series object of the ts type (indicate that the data is monthly, and the starting period is Jan 1992). Print data.
+```{r}
+series <- ts(df, frequency = 12, start = c(1992,1))
+print(series)
+```
+
+## Exercise 3
+
+Plot the time series. Ensure that the y axis starts from zero.
+
+```{r}
+plot(series, ylim=c(0,40000))
+```
+
+## Exercise 4 
+
+Use the gghistogram function from the **forecast** package to visually inspect the distribution of time series values. Add a kernel density estimate and a normal density function to the plot.
+
+```{r}
+require(forecast)
+gghistogram(series, add.normal = TRUE, add.kde = TRUE)
+```
+
+## Exercise 5 
+
+Use the **decompose** function to break the series into seasonal, trend, and irregular components (apply multiplicative decomposition). Plot the decomposed series.
+
+```{r}
+series_decomposed <- decompose(series, type='multiplicative')
+plot(series_decomposed)
+```
+
+## Exercise 6 
+Explore the structure of the decomposed object, and find seasonal coefficients (multiples). Identify the three months with the greatest coefficients, and the three months with the smallest coefficients. (Note that the coefficents are equal in different years).
+
+```{r}
+seasonal_coef <- data.frame(series_decomposed$figure)
+seasonal_coef <- cbind(seasonal_coef, seq(1:12))
+seasonal_coef[order(-seasonal_coef[,1]), ]
+```
+
+## Exercise 7 
+Check whether the times eries is trend-stationary (i.e. its mean and variance are constant with respect to a trend) using function **kpss.test** from the **tseries** package. (Note that the null hypothesis of the test is that the series is trend-stationary).
+
+```{r}
+require(tseries)
+kpss.test(series)
+```
+
+## Exercise 8 
+
+Use the **diff** function to create a differenced time series (i.e. a series that includes differences between the values of the original series), and test it for trend stationarity.
+
+```{r}
+series_differenced <- diff(series)
+kpss.test(series_differenced)
+```
+
+## Exercise 9
+
+Plot the differenced time series. 
+
+```{r}
+plot(series_differenced)
+```
+
+## Exercise 10
+
+Use the **Acf** and **Pacf** functions from the **forecast** package to explore autocorrelation of the differenced seires. Find at which lags correlation between lagged values is tstatistically significant at 5% level.
+
+```{r}
+require(forecast)
+Acf(series_differenced)
+Pacf(series_differenced)
+```
+
