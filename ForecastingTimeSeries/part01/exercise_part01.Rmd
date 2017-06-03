@@ -7,6 +7,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Forecasting: Time Series Exploration 
+
 [Original Source](http://www.r-exercises.com/2017/04/10/forecasting-time-series-exploration-exercises-part-1/)
 
 ## Exercise 1

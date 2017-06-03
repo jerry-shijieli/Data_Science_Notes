@@ -9,6 +9,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Forecasting: Linear Trend and ARIMA Models 
 
+[Original Source](http://www.r-exercises.com/2017/04/15/forecasting-linear-models-exercises-part-2/)
+
 There are two main approaches to time series forecasting. One of them is to find persistent patterns in a time series itself, and extrapolate those patterns. Another is to discover how a series depend on other variables, which serve as predicators. 
 
 - naive model
