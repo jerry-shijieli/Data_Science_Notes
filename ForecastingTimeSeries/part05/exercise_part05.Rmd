@@ -1,0 +1,137 @@
+---
+title: "exercise_part05"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Forecasting: ARIMAX Model
+
+[Original Source](http://www.r-exercises.com/2017/05/05/forecasting-arimax-model-exercises-part-5/)
+
+The standard ARIMA (autoregressive integrated moving average) model allows to make forecasts based only on the past values of the forecast variabe. The model assumes that future values of a variable linearly depend on its past values, as well as on the values of past (stochastic) shocks. The ARIMAX model is an extended version of the ARIMA model. It includes also other indepenedent (predictor) variables. The model is also referred to as the vector ARIMA or the dynamic regression model.
+
+The ARIMAX model is similar to a multivariate regression model, but allows to take advantage of autocorrelation that may be present in residuals of the regression to improve the accuracy of a forecast. 
+
+Here use the **auto.arima** function from the **forecast** package to make forecasts withthe ARIMAX model. A function from the **lmtest** package is also used to check the statistical significance of regression coefficients.
+
+## Exercise 1
+Load the dataset, and plot the variables cons (ice cream consumption), temp(temperature), and income.
+
+```{r}
+require(ggplot2)
+require(gridExtra)
+df <- read.csv("Icecream.csv")
+p1 <- ggplot(df, aes(x=X, y=cons)) + ylab("Consumption") + xlab("") + geom_line() + expand_limits(x=0, y=0)
+p2 <- ggplot(df, aes(x=X, y=temp)) + ylab("Temperature") + xlab("") + geom_line() + expand_limits(x=0, y=0)
+p3 <- ggplot(df, aes(x=X, y=income)) + ylab("Income") + xlab("Period") + geom_line() + expand_limits(x=0, y=0)
+grid.arrange(p1, p2, p3, ncol=1, nrow=3)
+```
+
+## Exercise 2
+
+Estimate an ARIMA model for the data on ice cream consumption using the **auto.arima** function. Then pass the model as input to the **forecast** function to get a forecast for the next 6 periods (both functions are from the forecast package). 
+
+```{r}
+require(forecast)
+fit_cons <- auto.arima(df$cons)
+fcast_cons <- forecast(fit_cons, h=6)
+```
+
+## Exercise 3
+
+Plot the obtained forecast with the **autoplot.forecast** function from the **forecast** package.
+
+```{r}
+autoplot.forecast(fcast_cons)
+```
+
+## Exercise 4
+
+Use the **accuracy** function from the **forecast** package to find the mean absolute scaled error (MASE) of the fitted ARIMA model.
+
+```{r}
+accuracy(fit_cons)
+```
+
+## Exercise 5
+
+Estimate an extended ARIMA model for the consumption data with the temperature variable as an additional regressor (using the **auto.arima** function). Then make a forecast for the next 6 periods (note that this forecast requires an assumption about the expected temperature; assume that the temperature for the next 6 periods will be represented by the following vector: **fcast_temp <- c(70.5, 66, 60.5, 45.5, 36, 28)**). Plot the obtained forecast.
+
+```{r}
+fit_cons_temp <- auto.arima(df$cons, xreg = df$temp)
+fcast_temp <- c(70.5, 66, 60.5, 45.5, 36, 28)
+fcast_cons_temp <- forecast(fit_cons_temp, xreg=fcast_temp, h=6)
+autoplot.forecast(fcast_cons_temp)
+```
+
+## Exercise 6
+
+Print summary of the obtained forecast. Find the coefficient for the temperature variable, its standard error, and the MASE of the forecast. Compare the MASE with the one of the initial forecast.
+
+```{r}
+summary(fcast_cons_temp)
+```
+
+## Exercise 7 
+
+Check the statistical significance of the temperature variable coefficient using the **coeftest** function from the **lmtest** package. Is the coefficient statistically significant at 5% level?
+
+```{r}
+require(lmtest)
+coeftest(fit_cons_temp)
+```
+
+## Exercise 8 
+
+The funciton that estimates the ARIMA model can input more additional regressors, but only in the form of a matrix. Create a matrix with the following columns: 
+1. values of the temperature variable,
+2. values of the income variable,
+3. values of the income variable lagged one period,
+4. values fo the income variable lagged two period.
+
+Print matrix.
+Note: the last three columns can be created by prepending two NA's to the vector of values of the income variable, and using the obtained vector as an input to the **embed** function (with the **dimension** parameter equal to the number of columns to be created).
+
+```{r}
+temp_column <- matrix(df$temp, ncol=1)
+income <- c(NA, NA, df$income)
+income_matrix <- embed(income, 3)
+vars_matrix <- cbind(temp_column, income_matrix)
+print(vars_matrix)
+```
+
+## Exercise 9
+
+Use the obtained matrix to fit three extened ARIMA models that use the following variables as additional regressors:
+1. temperature, income,
+2. temperature, income at lags 0,1,
+3. temperature, income at lags 0,1,2.
+
+Examine the summary for each model, and find the model with the lowest value of the Akaike information criterion (AIC). Note that the AIC cannot be used for comparison fo ARIMA models with different orders of integration (expressed by the middle terms in the model specifications) because of a difference in the number of observations. For example, an AIC value from a non-differenced model, ARIMA (p, 0, q), cannot be compared to the corresponding value fo a differenced model, ARIMA (p, 1, q).
+
+```{r}
+fit_vars_0 <- auto.arima(df$cons, xreg = vars_matrix[, 1:2])
+fit_vars_1 <- auto.arima(df$cons, xreg = vars_matrix[, 1:3])
+fit_vars_2 <- auto.arima(df$cons, xreg = vars_matrix[, 1:4])
+print(fit_vars_0)
+print(fit_vars_1)
+print(fit_vars_2)
+```
+
+The AIC can be used because the models have the same order of integration (d=0). The model with lowest value of AIC is the first model.
+
+## Exercise 10
+
+Use the model found in the previous exercise to make a forecast for the next 6 periods, and plot the forecast. (The forecast requires a matrix of the expected temperature and income for the next 6 periods; create the matrix using the **fcast_temp** variable, and the following values for expected income: 91, 91, 93, 96, 96, 96). Find the mean absolute scaled error of the model, and compare it with the ones from the first two models in this exercise set.
+
+```{r}
+expected_temp_income <- matrix(c(fcast_temp, 91, 91, 93, 96, 96, 96), ncol=2, nrow=6)
+fcast_cons_temp_income <- forecast(fit_vars_0, xreg=expected_temp_income, h=6)
+autoplot.forecast(fcast_cons_temp_income)
+```
+
