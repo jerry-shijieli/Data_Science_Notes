@@ -1,0 +1,117 @@
+---
+title: "share_analysis"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Fundamental and Technical Analysis of Shares 
+
+[Original Source](http://www.r-exercises.com/2016/08/31/fundamental-and-technical-analysis-of-shares-exercises/)
+
+Explore possibilities for fundamental and technical analysis of stocks offered by the **quantmod** package.
+
+```{r}
+library(quantmod)
+```
+
+
+## Exercise 1
+
+Load FB (Facebook) market data from Yahoo and assign it to an xts object fb.p.
+
+```{r}
+fb.p <- getSymbols("FB", env=NULL)
+```
+
+## Exercise 2
+
+Display monthly closing prices of Facebook in 2015.
+
+```{r}
+Cl(to.monthly(fb.p["2015::2015-12-31"]))
+```
+
+## Exercise 3
+
+Plot weekly returns of FB in 2016.
+
+```{r}
+plot(weeklyReturn(fb.p, subset="2016::"), main="Weekly return of Facebook")
+```
+
+## Exercise 4
+
+Plot a candlestick chart of FB in 2016.
+
+```{r}
+candleChart(fb.p, subset="2016::2016-12-31", name="Facebook", theme="white")
+```
+
+## Exercise 5
+
+Plot a line chart of FB in 2016., and add boilinger bands and a Relative Strength index to the chart.
+
+```{r}
+chartSeries(fb.p, subset="2016::2016-12-31", type="line", name="Facebook", theme="white")
+addBBands()
+addRSI()
+```
+
+## Exercise 6
+
+Get yesterday's EUR/USD rate.
+
+```{r}
+getFX("EUR/USD", from=Sys.Date()-1, env=NULL)
+```
+
+## Exercise 7
+
+Get financial data for FB and display it.
+
+```{r}
+fb.f <- getFin("FB", env=NULL)
+viewFin(fb.f)
+```
+
+## Exercise 8
+
+Calculate the current ratio for FB for years 2013, 2014 and 2015. (Tip: You can calculate the current ratio when you divide current assets with current liabilities from the balance sheet.)
+
+```{r}
+fb.bs <- viewFin(fb.f, "BS", "A")
+fb.bs["Total Current Assets", c("2013-12-31", "2014-12-31", "2015-12-31")] / fb.bs["Total Current Liabilities", c("2013-12-31", "2014-12-31", "2015-12-31")]
+```
+
+## Exercise 9
+ 
+Based on the last closing price and income statement for 12 months ending on December 31th 2015, Calculate the PE ratio for FB. (Tip: PE stands for Price/Earnings ratio. You calculate it as stock price divided by diluted normalized EPS read from income statement.)
+
+```{r}
+price <- Cl(fb.p[NROW(fb.p)])
+fb.is <- viewFin(fb.f, "IS", "a")
+EPS <- fb.is["Diluted Normalized EPS", "2015-12-31"]
+
+price / EPS
+```
+
+## Exercise 10
+
+write a function getROA(symbol, year) which will calculate return on asset for given stock symbol and year. What is the ROI for FB in 2014. (Tip: ROA stands for Return on asset. You calculate it as net income divided by total asset.)
+
+```{r}
+getROA <- function(symbol, year) {
+  symbol.f <- getFin(symbol, env=NULL)
+  symbol.ni <- viewFin(symbol.f, "IS", "A")["Net Income", paste(year, sep="", "-12-31")]
+  symbol.ta <- viewFin(symbol.f, "BS", "A")["Total Assets", paste(year, sep="", "-12-31")]
+  symbol.ni / symbol.ta * 100
+}
+
+getROA("FB", 2014)
+```
+
