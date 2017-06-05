@@ -1,0 +1,141 @@
+---
+title: "stock_price_analysis03"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Stock Prices Analysis
+
+Continue with part 1 ...
+
+```{r}
+library(tseries)
+library(forecast)
+```
+
+## Exercise 1
+
+Test for normality of the distribution of closing prices of YHOO using histogram.
+
+```{r}
+data <- read.csv("http://www.r-exercises.com/wp-content/uploads/2016/07/data.csv")
+data.close <- reshape(data[c("Symbol","Date","Close")], timevar="Symbol", idvar="Date", direction="wide")
+colnames(data.close) <- c("Date", as.character(unique(data$Symbol)))
+data.close$Date <- as.Date(data.close$Date)
+data.close <- data.close[with(data.close, order(Date)), ]
+
+diff.yhoo <- diff(data.close$YHOO)
+
+hist(diff.yhoo, prob="T", col="red", ylab="Frequencies", xlab="Price differencies", main="YHOO")
+lines(density(diff.yhoo))
+mu <- mean(diff.yhoo)
+sigma <- sd(diff.yhoo)
+x <- seq(min(diff.yhoo), max(diff.yhoo), length=length(diff.yhoo))
+y <- dnorm(x, mu, sigma)
+lines(x, y, lwd=2, col="blue")
+```
+
+## Exercise 2
+
+Test for normality of the distribution of closing prices of YHOO using normal q-q plot.
+
+```{r}
+qqnorm(diff.yhoo, main="YHOO Normal Q-Q Plot")
+qqline(diff.yhoo)
+```
+
+## Exercise 3
+
+Test for normality of distribution of closing prices of YHOO using Kolmogorov-Smirnov and Shapiro tests.
+
+Based on four tests, what can you say about the closing prices of YHOO?
+
+1. Closing prices of YHOO are approximately normaly distributed
+2. The distribution of closing prices of YHOO does not conform to the normal distribution
+
+```{r}
+ks.test(diff.yhoo, "pnorm", mean(diff.yhoo), sd(diff.yhoo))
+shapiro.test(diff.yhoo)
+```
+
+## Exercise 4
+
+Plot on the same chart:
+
+1. Closing prices of GE
+2. 12 days moving average of the closing prices of GE
+3. 50 days moving average of the closing prices of GE
+
+```{r}
+plot(x=data.close$Date, y=data.close$GE, type='l', main="Closing Prices of GE", xlab="", ylab="Price")
+lines(x=data.close$Date, y=filter(data.close$GE, filter=rep(1/12, 12), method="convolution", sides=1), col="red")
+lines(x=data.close$Date, y=filter(data.close$GE, filter=rep(1/50, 50), method = "convolution", sides = 1), col="blue")
+```
+
+## Exercise 5
+
+Create ts object and display closing prices of BAC on correliogram. Is the time series stationary?
+
+* Yes
+* No
+
+```{r}
+data.close.ts <- ts(data.close[, -1])
+tsdisplay(data.close.ts[, "BAC"], main="Correlogram of closing prices of BAC")
+```
+
+## Exercise 6
+
+Is the time series of the closing prices of BAC stationary when you differentiate it, based on the correliogram?
+
+* Yes
+* No
+
+```{r}
+tsdisplay(diff(data.close.ts[, "BAC"]), main="Correlogram of differentiated closing prices of BAC")
+```
+
+## Exercise 7
+
+Find the best fitting ARIMA model for closing prices of BAC.
+
+```{r}
+fit.diff <- auto.arima(diff(data.close.ts[, "BAC"]), stepwise=FALSE)
+summary(fit.diff)
+```
+
+
+## Exercise 8
+
+Display ACF graph for the residuals of the model from exercise 7.
+
+```{r}
+acf(residuals(fit.diff), main="Correlogram fo residuals of differentiated closing prices of BAC")
+```
+
+## Exercise 9
+
+Use the first 80% of a time series of prices of BAC to make a prediction for the rest 20% of data. Save the values in a variable.
+
+```{r}
+train <- data.close.ts[1:(0.8*length(data.close.ts[,"BAC"]))]
+predictions <- predict(arima(train, order=c(2,0,0)), n.ahead=c(0.2*length(data.close.ts[, "BAC"])))$pred
+```
+
+## Exercise 10
+
+Using data the exercise 9 and function accuracy from the forecast package, test the accuracy of the predictions. Is the prediction acceptable? (Tip: Prediction is acceptable if the field RMSE from the result of accuray is less than or equal to standard deviation of test data.).
+
+```{r}
+test <- data.close.ts[(0.8*length(data.close.ts[,"BAC"])+1):length(data.close.ts[,"BAC"])]
+ac <- accuracy(predictions, test)[2]
+stdev <- sd(test)
+
+ifelse(ac <= stdev, "Yes", "No")
+```
+
