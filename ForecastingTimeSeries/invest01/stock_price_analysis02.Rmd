@@ -1,0 +1,139 @@
+---
+title: "stock_price_analysis02"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Stock prices analysis
+
+Continue with part 1 ...
+
+## Exercise 1
+
+Plot a polygon showing closing prices of stock X for the last 90 trading days.
+
+```{r}
+data <- read.csv("http://www.r-exercises.com/wp-content/uploads/2016/07/data.csv")
+
+data.close <- reshape(data[c("Symbol", "Date", "Close")], timevar = "Symbol", 
+                      idvar = "Date", direction="wide")
+colnames(data.close) <- c("Date", as.character(unique(data$Symbol)))
+data.close$Date <- as.Date(data.close$Date)
+data.close <- data.close[with(data.close, order(Date)), ]
+
+last.90 <- data.close[(NROW(data.close)-90):NROW(data.close), ]
+plot(type='l', x=last.90$Date, y=last.90$X, ylab="Closing Price", xlab="", main="Closing price of X for last 90 trading days.")
+```
+
+## Exercise 2
+
+Suppose you have equal amounts of each stock in the data frame. Calculate and plot the average daily return of your portfolio. (Tip: daily return on stock is calculated in part 1, exercise 7.)
+
+```{r}
+data.return <- data.frame(Date=data.close$Date[-1], sapply(data.close[-1], function(x){
+  diff(x) / x[-length(x)] + 1
+}))
+
+plot(x=data.return$Date, y=rowMeans(data.return[-1], na.rm = TRUE),type=c('l'), 
+     xlab="", ylab="Daily return", main=paste("Average daily return of ", NCOL(data.return)-1, " stocks"))
+```
+
+## Exercise 3
+
+Plot pairwise scatter plots comparing returns on all stocks in data set.
+
+```{r}
+pairs(data.close[-1])
+```
+
+## Exercise 4
+
+Fit a linear model of the form Y=a+bX to closing prices of YHOO and plot it on a polygon together with actual closing prices of YHOO.
+
+```{r}
+plot(type="l", x=data.close$Date, y=data.close$YHOO, 
+     ylab="Closing Price", xlab = "", main="CLosing prices of YHOO")
+lines(x=data.close$Date, y=lm(data.close$YHOO~data.close$Date)$fitted.values, col="red")
+```
+
+## Exercise 5
+
+How much of the variation in closing prices of GE is explained by the linear model of the form Y=a+bX that fits to daily returns of GE.(Tip: you need to calculate r2.)
+
+```{r}
+summary(lm(data.close$GE~data.close$Date))
+```
+
+## Exercise 6
+
+When you fit a simple linear model of the form Y=a+bX to closing prices of YHOO in 2016, is the coefficient b statistically significant on the level of 0.05?
+
+1. Yes
+2. No
+
+```{r}
+y <- subset(data.close, data.close$Date >= "2016-01-01")$YHOO
+x <- subset(data.close, data.close$Date >= "2016-01-01")$Date
+summary(lm(y~x))
+```
+
+## Exercise 7
+
+Find the linear model Y=a+bX that fits to closing prices of GOOG in 2016.
+
+```{r}
+y <- subset(data.close, data.close$Date >= "2016-01-01")$GOOG
+x <- subset(data.close, data.close$Date >= "2016-01-01")$Date
+summary(lm(y~x))
+```
+
+## Exercise 8
+
+Calculate 95% confidence interval for linear model Y=a+bX that fits to closing prices of GOOG in 2016. Save the value in a variable for later use.
+
+```{r}
+conf.interval <- predict(lm(y~x), interval = "prediction")
+```
+
+## Exercise 9
+
+With fit linear model Y=a+bX, predict GOOG closing price with 95% confidence interval for ten days ahead of the last recorded price, based on closing prices in 2016. Save the predicted values in a variable for later use.
+
+```{r}
+newdata <- data.frame(x=data.frame(x=seq(max(x)+1, by=1, length.out=10)))
+model.fit <- lm(y~x)$fitted.values
+pred.goog <- predict(lm(y~x), newdata, interval="prediction")
+```
+
+## Exercise 10
+
+Plot on the same graph:
+
+1. the closing price of GOOG in 2016
+2. fitted values for model Y=a+bX for closing prices of GOOG in 2016 (from exercise 7)
+3. 95% confidence interval for model Y=a+bX for closing price of GOOG in 2016 (from exercise 8)
+4. prediction of GOOG closing price for next ten days with 95% confidence interval (from exercise 9)
+
+```{r}
+# actual data
+plot(type='l', x=x, y=y, ylab="Closing Prices", xlab="", main="Closing Prices of GOOG", 
+     ylim=range(c(max(y, conf.interval[, 'upr'], pred.goog[, 'upr']))), 
+     xlim = range(c(min(x), max(newdata$x))))
+# model
+lines(x=x, y=model.fit, col="red")
+# 95% confidence interval
+lines(x=x, y=conf.interval[, 'lwr'], col='blue')
+lines(x=x, y=conf.interval[, 'upr'], col='blue')
+# prediction 
+lines(x =newdata$x, y=pred.goog[, 'fit'], col='brown')
+# 95% confidence interval for prediction
+lines(x=newdata$x, y=pred.goog[, 'lwr'], col='brown')
+lines(x=newdata$x, y=pred.goog[, 'upr'], col='brown')
+
+```
+
