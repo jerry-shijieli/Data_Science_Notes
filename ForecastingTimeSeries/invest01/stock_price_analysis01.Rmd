@@ -1,0 +1,149 @@
+---
+title: "stock_price_analysis01"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Stock prices analysis
+
+[Original Source](http://www.r-exercises.com/2016/07/26/stock-prices-analysis-part-1-exercises/)
+
+Use basic descriptive statistics to explore daily prices of stocks.
+
+## Exercise 1 
+
+Load data directly and save in a variable.
+
+Examine its following properties:
+1. columns names
+2. data class and class of each column of data
+3. lowest date
+4. highest date
+5. distinct stock symbols
+
+```{r}
+data <- read.csv("http://www.r-exercises.com/wp-content/uploads/2016/07/data.csv", header=TRUE, sep=',')
+colnames(data)
+class(data)
+sapply(data, class)
+min(as.Date(data$Date))
+max(as.Date(data$Date))
+unique(as.character(data$Symbol))
+```
+
+
+## Exercise 2
+
+Get a subset of the data containing only daily opening prices of BAC in the year 2016.
+
+```{r}
+subset(data, data$Symbol=="BAC" & as.Date(data$Date)>=as.Date('2016-01-01') & as.Date(data$Date)<=as.Date('2016-12-31'))$Open
+```
+
+## Exercise 3
+
+For each stock, obtain the lowest and highest closing price together with dates when these prices occured. 
+
+```{r}
+maxClose <- aggregate(data$Close, list(data$Symbol), max)
+maxClose$maxDate <- data[with(data, ave(Close, Symbol, FUN=max)==Close), 2]
+names(maxClose) <- c("Symbol", "Max Price", "Max Date")
+minClose <- aggregate(data$Close, list(data$Symbol), min)
+minClose$minDate <- data[with(data, ave(Close, Symbol, FUN=min)==Close), 2]
+names(minClose) <- c("Symbol", "Min Price", "Min Date")
+merge(maxClose, minClose, by="Symbol")
+```
+
+## Exercise 4
+
+Write a function called AvgPrice that returns average closing price for a given stock symbol and a period of time between given start and end date.
+
+Using the function, what is the average closing price of X in January of 2016?
+
+```{r}
+AvgPrice <- function(d, symbol, start, end){
+  mean(subset(d, d$Symbol==symbol & as.Date(d$Date)>=as.Date(start) & as.Date(d$Date)<=as.Date(end))$Close)
+}
+
+AvgPrice(data, "X", '2016-01-01', '2016-01-31')
+```
+
+## Exercise 5
+
+Write a function called WAvgPrice that returns weighted average closing price for a given stock symbol and given period of time between start and end date. (Tip: Weighted average closing price is calculated as sum(close * volume)/sum(volume))
+
+Using the function, what is the weighted average closing price of GE in year 2016.
+
+```{r}
+WAvgPrice <- function(d, symbol, start, end){
+  tmp <- subset(d, d$Symbol==symbol & as.Date(d$Date)>=as.Date(start) & as.Date(d$Date)<=as.Date(end))
+  tmp$wPrice = tmp$Close * tmp$Volume
+  sum(tmp$wPrice) / sum(as.numeric(tmp$Volume))
+}
+
+WAvgPrice(data, "GE", '2016-01-01', '2016-12-31')
+```
+
+## Exercise 6
+
+Reshape original data frame to get data frame with dates as the first column and closing prices of stocks in other columns, each column containing one stock. Name the columns after stock symbol.
+
+Order resulting data frame by date and save it in a variable for later use.
+
+```{r}
+data.close <- reshape(data[c("Symbol", "Date", "Close")], timevar="Symbol", idvar="Date", direction="wide")
+colnames(data.close) <- c("Date", as.character(unique(data$Symbol)))
+data.close <- data.close[with(data.close, order(Date)), ]
+```
+
+## Exercise 7
+
+Using the variable from the previous exercise, calculate daily return for each stock and save result in new variable for later use. Daily return is calculated as (pricet-price(t-1))/price(t-1).
+
+Calculate average daily return for each stock.(Tip: average rate is calculated as a geometric mean)
+
+```{r}
+data.return <- data.frame(Date=data.close$Date[-1], sapply(data.close[-1], function(x){
+  diff(x) / x[-length(x)]+1
+}))
+sapply(data.return[-1], function(x){
+  round((prod(x, na.rm=TRUE)^(1/NROW(x))-1)*100, 2)
+})
+```
+
+## Exercise 8
+
+Using daily return data from previous exercise, which stock symbol has highest average risk, calculated as standard deviation of daily returns?
+
+```{r}
+risks <- sapply(data.return[as.Date(data.return$Date)>=as.Date('2016-01-01') & as.Date(data.return$Date) <= as.Date('2016-01-31'), -1], sd)
+names(risks)[which(risks==max(risks))]
+```
+
+## Exercise 9
+
+Write a function called LowestRisk that returns stock symbol with lowest risk in a given period of time between start and end. Call the function to obtain lowest risk stock symbol.
+
+```{r}
+LowestRisk <- function(d, start, end){
+  data.period = subset(d, as.Date(d$Date)>=as.Date(start) & as.Date(d$Date)<=as.Date(end))
+  risks <- sapply(data.period[-1], sd)
+  names(risks)[which(risks == min(risks))]
+}
+
+LowestRisk(data.return, '2016-01-01', '2016-01-31')
+```
+
+## Exercise 10
+
+Using daily returns of stocks from exercise 7, calculate the correlation coefficient matrix which includes every stock symbol in the data set.
+ 
+```{r}
+cor(subset(data.return, select=-c(Date)), use="pairwise.complete.obs")
+```
+
