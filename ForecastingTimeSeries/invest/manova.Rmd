@@ -1,0 +1,146 @@
+---
+title: "manova"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Using MANOVA to Analyse a Banking Crisis 
+
+[Original Source](http://www.r-exercises.com/2016/08/24/using-manova-to-analyse-banking-crises/)
+
+Try to find if there is a difference in the combination of export and bank reserves, depending on the status of banking sector (is there a crisis or not).
+
+```{r}
+library("MVN")
+library("heplots")
+```
+
+## Exercise 1
+
+Is the sample size large enough for conducting MANOVA? (Tip: You should have at least 2 cases for each cell.)
+
+1. Yes
+2. No
+
+```{r}
+data <- read.csv("http://www.r-exercises.com/wp-content/uploads/2016/08/banking-crises-data.csv", sep=",", header=TRUE)
+aggregate(.~crisis, data=data, FUN=function(x){sum(!is.na(x))}, na.action = na.pass)
+```
+
+## Exercise 2
+
+Are there univariate and multivariate outliers?
+
+1. There are univariate, but not multivariate outliers
+2. There doesn't exist a univariate outlier, but there are multivariate outliers
+3. There exist both univariate and multivariate outliers
+
+```{r}
+boxplot(data$export)$out
+
+boxplot(data$reserves)$out
+
+head(mvOutlier(data[, 2:3], qqplot=TRUE)$outlier)
+```
+
+## Exercise 3
+
+How do you estimate univariate and multivariate normality of dependent variables?
+
+1. Both variables are univariate normal, but they are not multivariate normally distributed
+2. None of the variables is univariate normal, and hence there doesn't exist multivariate normality
+3. Both variables are univariate normal and the data is multivariate normally distributed
+
+```{r}
+uniNorm(data[, 2:3], type="SW", desc=TRUE)
+uniPlot(data[, 2:3], type="histogram")
+
+mardiaTest(data[, 2:3], qqplot=TRUE)
+
+hzTest(data[, 2:3], qqplot=TRUE)
+
+roystonTest(data[, 2:3], qqplot=TRUE)
+```
+
+## Exercise 4
+
+Using the matrix of scatter plots, check for the linearity between dependent variables export and reserves for each category of independent variable.
+
+```{r}
+pairs(data[data$crisis=="No", 2:3], main="No crisis")
+
+pairs(data[data$crisis=="Yes", 2:3], main="Crisis")
+```
+
+## Exercise 5
+
+Calculate the correlation between dependent variables export and reserves. Is it appropriate to justify conducting MANOVA?
+
+1. Yes
+2. No
+
+```{r}
+cor(data$export, data$reserves)
+```
+
+## Exercise 6
+
+Is there equality of covariances of the dependent variables export and reserves across the groups. (Tip: You should perform Box's M test of equality of covariance matrices.)
+
+1. Yes
+2. No
+
+```{r}
+boxM(data[, 2:3], group=data$crisis)
+```
+
+## Exercise 7
+
+Is there equality of variances of the dependent variables export and reserves across groups? (Tip: Use Levens's test of error variances.)
+
+1. Yes
+2. No
+
+```{r}
+leveneTests(data[, 2:3], group=data$crisis, center=mean)
+```
+
+## Exercise 8
+
+On the level of significance of 0.05, is there effect of banking crisis to export and banking reserves combination?
+
+1. Yes
+2. No
+
+```{r}
+m <- manova(cbind(data$export, data$reserves)~data$crisis)
+summary(m)
+```
+
+## Exercise 9
+
+How much of the variance in the dependent variables export and reserves is explained by banking crisis?
+
+```{r}
+etasq(m)
+```
+
+## Exercise 10
+
+Does the export differ when banking sector is in the crisis compared to when banking sector is not in the crisis? What about reserves?
+
+1. Only export differ
+2. Only reserves differ
+3. Both export and reserves differ
+4. None of them differ
+
+
+```{r}
+summary(aov(cbind(data$export, data$reserves)~data$crisis))
+```
+
